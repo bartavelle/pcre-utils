@@ -26,14 +26,11 @@ substitute regexp srcstring repla = runErrorT $ do
                       Right y -> return y
                       Left rr -> throwError rr
     parsedReplacement <- check (parseOnly repparser repla)
-    liftIO $ print parsedReplacement
     (matches, captures) <- getMatches regexp srcstring V.empty
-    liftIO $ print (matches, captures)
     let !replaceString = applyCaptures parsedReplacement captures
         applyReplacement :: RegexpSplit BS.ByteString -> BS.ByteString
         applyReplacement (Unmatched x) = x
         applyReplacement (Matched _) = replaceString
-    liftIO $ print replaceString
     return $! BS.concat $! map applyReplacement matches
 
 -- Transforms the parsed replacement and the vector of captured stuff into
