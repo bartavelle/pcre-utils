@@ -3,7 +3,7 @@
 
 name:                pcre-utils
 version:             0.1.0.0
-synopsis:            Basic utilities such as substitute and split for PCRE regexps.
+synopsis:            Perl-like substitute and split for PCRE regexps.
 -- description:         
 license:             BSD3
 license-file:        LICENSE

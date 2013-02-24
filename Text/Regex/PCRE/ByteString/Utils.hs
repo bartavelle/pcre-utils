@@ -1,6 +1,8 @@
 module Text.Regex.PCRE.ByteString.Utils
     ( substitute
     , split
+    , substituteCompile
+    , splitCompile
     ) where
 
 import Text.Regex.PCRE.ByteString
@@ -10,8 +12,11 @@ import qualified Data.Vector as V
 import Data.Attoparsec.ByteString.Char8
 import Control.Applicative
 
--- | Substitutes values matched by a "Regexp". References (such as \2) can be
--- used.
+{-| Substitutes values matched by a `Regex`. References can be used:
+
+> sdqqsd
+
+-}
 substitute :: Regex             -- ^ The regular expression, taken from a call to `compile`
            -> BS.ByteString     -- ^ The source string
            -> BS.ByteString     -- ^ The replacement string
@@ -42,7 +47,7 @@ applyCaptures repl capt = BS.concat (map applyCaptures' repl)
                                                       then ""
                                                       else capt V.! (idx-1)
 
--- | Splits strings, using a "Regexp" as delimiter.
+-- | Splits strings, using a `Regex` as delimiter.
 split :: Regex  -- ^ The regular expression, taken from a call to `compile`
       -> BS.ByteString -- ^ The source string
       -> IO (Either String [BS.ByteString])
@@ -104,3 +109,27 @@ escapedThing :: Parser Replacement
 escapedThing = do
     void (char '\\')
     fmap IndexedReplacement decimal <|> fmap (RawReplacement . BS.cons '\\') rawData
+
+
+-- | Compiles the regular expression and `substitute`s
+substituteCompile :: BS.ByteString     -- ^ The regular expression
+                  -> CompOption        -- ^ Compilation options
+                  -> BS.ByteString     -- ^ The source string
+                  -> BS.ByteString     -- ^ The replacement string
+                  -> IO (Either String BS.ByteString)
+substituteCompile regexp comp srcstring repla = do
+    re <- compile comp execBlank regexp
+    case re of
+        Right cre -> substitute cre srcstring repla
+        Left rr   -> return $ Left $ "Regexp compilation failed: " ++ show rr
+
+-- | Compiles the regular expression and `split`s.
+splitCompile :: BS.ByteString -- ^ The regular expression
+             -> CompOption        -- ^ Compilation options
+             -> BS.ByteString -- ^ The source string
+             -> IO (Either String [BS.ByteString])
+splitCompile regexp comp srcstring = do
+    re <- compile comp execBlank regexp
+    case re of
+        Right cre -> split cre srcstring
+        Left rr   -> return $ Left $ "Regexp compilation failed: " ++ show rr
