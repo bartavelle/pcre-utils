@@ -12,10 +12,9 @@ import qualified Data.Vector as V
 import Data.Attoparsec.ByteString.Char8
 import Control.Applicative
 
-{-| Substitutes values matched by a `Regex`. References can be used:
+{-| Substitutes values matched by a `Regex`. References can be used.
 
-> sdqqsd
-
+It doesn't support anything else than global substitution for now ..
 -}
 substitute :: Regex             -- ^ The regular expression, taken from a call to `compile`
            -> BS.ByteString     -- ^ The source string
@@ -108,25 +107,23 @@ escapedThing = do
     fmap IndexedReplacement decimal <|> fmap (RawReplacement . BS.cons '\\') rawData
 
 
--- | Compiles the regular expression and `substitute`s
+-- | Compiles the regular expression (using default options) and `substitute`s
 substituteCompile :: BS.ByteString     -- ^ The regular expression
-                  -> CompOption        -- ^ Compilation options
                   -> BS.ByteString     -- ^ The source string
                   -> BS.ByteString     -- ^ The replacement string
                   -> IO (Either String BS.ByteString)
-substituteCompile regexp comp srcstring repla = do
-    re <- compile comp execBlank regexp
+substituteCompile regexp srcstring repla = do
+    re <- compile compBlank execBlank regexp
     case re of
         Right cre -> substitute cre srcstring repla
         Left rr   -> return $ Left $ "Regexp compilation failed: " ++ show rr
 
--- | Compiles the regular expression and `split`s.
+-- | Compiles the regular expression (using default options) and `split`s.
 splitCompile :: BS.ByteString -- ^ The regular expression
-             -> CompOption        -- ^ Compilation options
              -> BS.ByteString -- ^ The source string
              -> IO (Either String [BS.ByteString])
-splitCompile regexp comp srcstring = do
-    re <- compile comp execBlank regexp
+splitCompile regexp srcstring = do
+    re <- compile compBlank execBlank regexp
     case re of
         Right cre -> split cre srcstring
         Left rr   -> return $ Left $ "Regexp compilation failed: " ++ show rr
