@@ -4,7 +4,7 @@
 name:                pcre-utils
 version:             0.1.0.0
 synopsis:            Perl-like substitute and split for PCRE regexps.
--- description:         
+description:         This package introduces split and replace like functions using PCRE regexps.
 license:             BSD3
 license-file:        LICENSE
 author:              Simon Marechal
@@ -13,6 +13,11 @@ maintainer:          bartavelle@gmail.com
 category:            Text
 build-type:          Simple
 cabal-version:       >=1.8
+
+source-repository head
+  type: git
+  location: git://github.com/bartavelle/pcre-utils.git
+
 
 library
   exposed-modules:     Text.Regex.PCRE.ByteString.Utils
