@@ -8,6 +8,7 @@ import qualified Data.ByteString as BS
 tests :: [(BS.ByteString, BS.ByteString, BS.ByteString, BS.ByteString)]
 tests = [ ("l", "x", "lap\\nin", "xap\\nin")
         , ("log(\\d+)truc", "x\\1x", "log186truc", "x186x")
+        , ("'", "'\\''", "# This file is managed by Puppet. DO NOT EDIT.", "# This file is managed by Puppet. DO NOT EDIT.")
         ]
 
 toTest :: (BS.ByteString, BS.ByteString, BS.ByteString, BS.ByteString) -> IO Test

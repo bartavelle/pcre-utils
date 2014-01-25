@@ -9,7 +9,7 @@ import Text.Regex.PCRE.ByteString
 import qualified Data.ByteString.Char8 as BS
 import Control.Monad.Error
 import qualified Data.Vector as V
-import Data.Attoparsec.ByteString.Char8
+import Data.Attoparsec.ByteString.Char8 as A
 import Control.Applicative
 
 {-| Substitutes values matched by a `Regex`. References can be used.
@@ -21,10 +21,9 @@ substitute :: Regex             -- ^ The regular expression, taken from a call t
            -> BS.ByteString     -- ^ The replacement string
            -> IO (Either String BS.ByteString)
 substitute regexp srcstring repla = runErrorT $ do
-    let check x = case x of
-                      Right y -> return y
-                      Left rr -> throwError rr
-    parsedReplacement <- check (parseOnly repparser repla)
+    parsedReplacement <- case parseOnly repparser repla of
+                             Right y -> return y
+                             Left rr -> throwError (rr ++ " when parsing the replacement string")
     (matches, captures) <- getMatches regexp srcstring V.empty
     let !replaceString = applyCaptures parsedReplacement captures
         applyReplacement :: RegexpSplit BS.ByteString -> BS.ByteString
@@ -104,8 +103,11 @@ rawData = takeWhile1 (/= '\\')
 escapedThing :: Parser Replacement
 escapedThing = do
     void (char '\\')
-    fmap IndexedReplacement decimal <|> fmap (RawReplacement . BS.cons '\\') rawData
-
+    let ac = do
+            n <- anyChar
+            r <- rawData
+            return $ BS.cons n r
+    fmap IndexedReplacement decimal <|> fmap (RawReplacement . BS.cons '\\') ac
 
 -- | Compiles the regular expression (using default options) and `substitute`s
 substituteCompile :: BS.ByteString     -- ^ The regular expression
