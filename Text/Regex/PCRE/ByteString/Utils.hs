@@ -1,3 +1,11 @@
+{- | A module implementing regexp-based split and substitute.
+
+>>> substituteCompile "(a+)" "lapin" "'\\1'"
+Right "l'a'pin"
+
+>>> splitCompile "\\d" "a1b2c3"
+Right ["a","b","c"]
+-}
 module Text.Regex.PCRE.ByteString.Utils
     ( substitute
     , split
@@ -15,6 +23,7 @@ import Control.Applicative
 {-| Substitutes values matched by a `Regex`. References can be used.
 
 It doesn't support anything else than global substitution for now ..
+
 -}
 substitute :: Regex             -- ^ The regular expression, taken from a call to `compile`
            -> BS.ByteString     -- ^ The source string
