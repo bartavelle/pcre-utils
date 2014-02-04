@@ -25,7 +25,7 @@ library
   ghc-options:         -Wall
   ghc-prof-options:    -caf-all -auto-all
   extensions:          OverloadedStrings, BangPatterns
-  build-depends:       base ==4.6.*, regex-pcre-builtin, bytestring, attoparsec, mtl, vector
+  build-depends:       base >= 4.6, regex-pcre-builtin, bytestring, attoparsec, mtl, vector
 
 Test-Suite test-split
     hs-source-dirs: test
