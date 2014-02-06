@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                pcre-utils
-version:             0.1.0.3
+version:             0.1.1
 synopsis:            Perl-like substitute and split for PCRE regexps.
 description:         This package introduces split and replace like functions using PCRE regexps.
 license:             BSD3
@@ -25,7 +25,7 @@ library
   ghc-options:         -Wall
   ghc-prof-options:    -caf-all -auto-all
   extensions:          OverloadedStrings, BangPatterns
-  build-depends:       base >= 4.6, regex-pcre-builtin, bytestring, attoparsec, mtl, vector
+  build-depends:       base >= 4.6 & < 4.8, regex-pcre-builtin, bytestring, attoparsec, mtl, vector
 
 Test-Suite test-split
     hs-source-dirs: test
