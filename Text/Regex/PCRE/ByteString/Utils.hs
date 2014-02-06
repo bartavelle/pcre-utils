@@ -19,6 +19,7 @@ import Control.Monad.Error
 import qualified Data.Vector as V
 import Data.Attoparsec.ByteString.Char8 as A
 import Control.Applicative
+import Data.Char (digitToInt)
 
 {-| Substitutes values matched by a `Regex`. References can be used.
 
@@ -55,7 +56,7 @@ applyCaptures repl capt = BS.concat (map applyCaptures' repl)
 split :: Regex  -- ^ The regular expression, taken from a call to `compile`
       -> BS.ByteString -- ^ The source string
       -> IO (Either String [BS.ByteString])
-split regexp srcstring = fmap (either Left (Right . removeEmptyLeft . regexpUnmatched . fst)) $ runErrorT (getMatches regexp srcstring V.empty)
+split regexp srcstring = either Left (Right . removeEmptyLeft . regexpUnmatched . fst) <$> runErrorT (getMatches regexp srcstring V.empty)
     where
         removeEmptyLeft = reverse . dropWhile BS.null . reverse
 
@@ -92,7 +93,7 @@ getMatches creg src curcaptures = do
         Right (Just ("","",rm,_)) -> return (map (Unmatched . BS.singleton) (BS.unpack rm), curcaptures)
 
         Right (Just (before,current,remaining,captures)) -> do
-            (remain, nextcaptures) <- getMatches creg remaining (curcaptures V.++ (V.fromList captures))
+            (remain, nextcaptures) <- getMatches creg remaining (curcaptures V.++ V.fromList captures)
             return (Unmatched before : Matched current : remain, nextcaptures)
 
 
@@ -116,7 +117,7 @@ escapedThing = do
             n <- anyChar
             r <- rawData
             return $ BS.cons n r
-    fmap IndexedReplacement decimal <|> fmap (RawReplacement . BS.cons '\\') ac
+    fmap (IndexedReplacement . digitToInt) digit <|> fmap (RawReplacement . BS.cons '\\') ac
 
 -- | Compiles the regular expression (using default options) and `substitute`s
 substituteCompile :: BS.ByteString     -- ^ The regular expression
