@@ -51,18 +51,22 @@ substitute regexp srcstring repla = runErrorT $ do
                              Right y -> return y
                              Left rr -> throwError (rr ++ " when parsing the replacement string")
     (matches, captures) <- getMatches regexp srcstring V.empty
-    let !replaceString = applyCaptures parsedReplacement captures
+    let !replaceString = applyCaptures firstMatch parsedReplacement captures
         applyReplacement :: RegexpSplit BS.ByteString -> BS.ByteString
         applyReplacement (Unmatched x) = x
         applyReplacement (Matched _) = replaceString
+        firstMatch = case filter isMatched matches of
+                         (Matched x:_) -> x
+                         _     -> ""
     return $! BS.concat $! map applyReplacement matches
 
 -- Transforms the parsed replacement and the vector of captured stuff into
 -- the destination ByteString.
-applyCaptures :: [Replacement] -> V.Vector BS.ByteString -> BS.ByteString
-applyCaptures repl capt = BS.concat (map applyCaptures' repl)
+applyCaptures :: BS.ByteString -> [Replacement] -> V.Vector BS.ByteString -> BS.ByteString
+applyCaptures firstmatch repl capt = BS.concat (map applyCaptures' repl)
     where
         applyCaptures' :: Replacement -> BS.ByteString
+        applyCaptures' WholeMatch = firstmatch
         applyCaptures' (RawReplacement r) = r
         applyCaptures' (IndexedReplacement idx) = if V.length capt < idx
                                                       then ""
@@ -128,6 +132,7 @@ getMatches creg src curcaptures = do
 
 data Replacement = RawReplacement BS.ByteString
                  | IndexedReplacement Int
+                 | WholeMatch
                  deriving (Show)
 
 repparser :: Parser [Replacement]
@@ -146,7 +151,9 @@ escapedThing = do
             n <- anyChar
             r <- rawData
             return $ BS.cons n r
-    fmap (IndexedReplacement . digitToInt) digit <|> fmap (RawReplacement . BS.cons '\\') ac
+        toReplacement 0 = WholeMatch
+        toReplacement n = IndexedReplacement n
+    fmap (toReplacement . digitToInt) digit <|> fmap (RawReplacement . BS.cons '\\') ac
 
 -- | Compiles the regular expression (using default options) and `substitute`s
 substituteCompile :: BS.ByteString     -- ^ The regular expression
