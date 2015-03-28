@@ -23,7 +23,7 @@ library
   exposed-modules:     Text.Regex.PCRE.ByteString.Utils
   -- other-modules:       
   ghc-options:         -Wall
-  ghc-prof-options:    -caf-all -auto-all
+  -- ghc-prof-options:    -caf-all -auto-all
   extensions:          OverloadedStrings, BangPatterns
   build-depends:       base >= 4.6 && < 4.9, regex-pcre-builtin >= 0.94.4.8, bytestring, attoparsec, mtl, vector, array
 
