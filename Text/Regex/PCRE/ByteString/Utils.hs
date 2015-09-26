@@ -29,7 +29,7 @@ module Text.Regex.PCRE.ByteString.Utils
 
 import Text.Regex.PCRE.ByteString
 import qualified Data.ByteString.Char8 as BS
-import Control.Monad.Error
+import Control.Monad.Except
 import qualified Data.Vector as V
 import Data.Attoparsec.ByteString.Char8 as A
 import Control.Applicative
@@ -46,7 +46,7 @@ substitute :: Regex             -- ^ The regular expression, taken from a call t
            -> BS.ByteString     -- ^ The source string
            -> BS.ByteString     -- ^ The replacement string
            -> IO (Either String BS.ByteString)
-substitute regexp srcstring repla = runErrorT $ do
+substitute regexp srcstring repla = runExceptT $ do
     parsedReplacement <- case parseOnly repparser repla of
                              Right y -> return y
                              Left rr -> throwError (rr ++ " when parsing the replacement string")
@@ -76,7 +76,7 @@ applyCaptures firstmatch repl capt = BS.concat (map applyCaptures' repl)
 split :: Regex  -- ^ The regular expression, taken from a call to `compile`
       -> BS.ByteString -- ^ The source string
       -> IO (Either String [BS.ByteString])
-split regexp srcstring = either Left (Right . removeEmptyLeft . regexpUnmatched . fst) <$> runErrorT (getMatches regexp srcstring V.empty)
+split regexp srcstring = fmap (removeEmptyLeft . regexpUnmatched . fst) <$> runExceptT (getMatches regexp srcstring V.empty)
     where
         removeEmptyLeft = reverse . dropWhile BS.null . reverse
 
@@ -114,7 +114,7 @@ isMatched _ = False
 regexpUnmatched :: [RegexpSplit a] -> [a]
 regexpUnmatched = regexpAll . filter (not . isMatched)
 
-getMatches :: Regex -> BS.ByteString -> V.Vector BS.ByteString -> ErrorT String IO ([RegexpSplit BS.ByteString], V.Vector BS.ByteString)
+getMatches :: Regex -> BS.ByteString -> V.Vector BS.ByteString -> ExceptT String IO ([RegexpSplit BS.ByteString], V.Vector BS.ByteString)
 getMatches _ "" curcaptures  = return ([], curcaptures)
 getMatches creg src curcaptures = do
     x <- liftIO $ regexec creg src
