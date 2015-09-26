@@ -30,7 +30,6 @@ module Text.Regex.PCRE.ByteString.Utils
 import Text.Regex.PCRE.ByteString
 import qualified Data.ByteString.Char8 as BS
 import Control.Monad.Except
-import qualified Data.Vector as V
 import Data.Attoparsec.ByteString.Char8 as A
 import Control.Applicative
 import Data.Char (digitToInt)
@@ -50,33 +49,30 @@ substitute regexp srcstring repla = runExceptT $ do
     parsedReplacement <- case parseOnly repparser repla of
                              Right y -> return y
                              Left rr -> throwError (rr ++ " when parsing the replacement string")
-    (matches, captures) <- getMatches regexp srcstring V.empty
-    let !replaceString = applyCaptures firstMatch parsedReplacement captures
-        applyReplacement :: RegexpSplit BS.ByteString -> BS.ByteString
+    matches <- getMatches regexp srcstring
+    let applyReplacement :: RegexpSplit BS.ByteString -> BS.ByteString
         applyReplacement (Unmatched x) = x
-        applyReplacement (Matched _) = replaceString
-        firstMatch = case filter isMatched matches of
-                         (Matched x:_) -> x
-                         _     -> ""
+        applyReplacement (Matched captured mcaptures) = applyCaptures captured parsedReplacement mcaptures
     return $! BS.concat $! map applyReplacement matches
 
 -- Transforms the parsed replacement and the vector of captured stuff into
 -- the destination ByteString.
-applyCaptures :: BS.ByteString -> [Replacement] -> V.Vector BS.ByteString -> BS.ByteString
-applyCaptures firstmatch repl capt = BS.concat (map applyCaptures' repl)
+applyCaptures :: BS.ByteString -> [Replacement] -> [BS.ByteString] -> BS.ByteString
+applyCaptures firstmatch repl mcaptures = BS.concat (map applyCaptures' repl)
     where
+        ncaptures = length mcaptures
         applyCaptures' :: Replacement -> BS.ByteString
         applyCaptures' WholeMatch = firstmatch
         applyCaptures' (RawReplacement r) = r
-        applyCaptures' (IndexedReplacement idx) = if V.length capt < idx
-                                                      then ""
-                                                      else capt V.! (idx-1)
+        applyCaptures' (IndexedReplacement idx)
+            | idx > ncaptures || idx < 0 = ""
+            | otherwise = mcaptures !! (idx - 1)
 
 -- | Splits strings, using a `Regex` as delimiter.
 split :: Regex  -- ^ The regular expression, taken from a call to `compile`
       -> BS.ByteString -- ^ The source string
       -> IO (Either String [BS.ByteString])
-split regexp srcstring = fmap (removeEmptyLeft . regexpUnmatched . fst) <$> runExceptT (getMatches regexp srcstring V.empty)
+split regexp srcstring = fmap (removeEmptyLeft . regexpUnmatched) <$> runExceptT (getMatches regexp srcstring)
     where
         removeEmptyLeft = reverse . dropWhile BS.null . reverse
 
@@ -93,41 +89,41 @@ split' :: Regex  -- ^ The regular expression, taken from a call to `compile`
        -> Either String [BS.ByteString]
 split' regexp srcstring = unsafePerformIO (split regexp srcstring)
 
-data RegexpSplit a = Matched a
+data RegexpSplit a = Matched a [a]
                    | Unmatched a
                    deriving (Show, Eq, Ord)
 
 instance Functor RegexpSplit where
-    fmap f (Matched x)   = Matched (f x)
+    fmap f (Matched x y)   = Matched (f x) (map f y)
     fmap f (Unmatched x) = Unmatched (f x)
 
 regexpAll :: [RegexpSplit a] -> [a]
 regexpAll = map unreg
     where
-        unreg ( Matched x   ) = x
+        unreg ( Matched x _ ) = x
         unreg ( Unmatched x ) = x
 
 isMatched :: RegexpSplit a -> Bool
-isMatched (Matched _) = True
+isMatched (Matched _ _) = True
 isMatched _ = False
 
 regexpUnmatched :: [RegexpSplit a] -> [a]
 regexpUnmatched = regexpAll . filter (not . isMatched)
 
-getMatches :: Regex -> BS.ByteString -> V.Vector BS.ByteString -> ExceptT String IO ([RegexpSplit BS.ByteString], V.Vector BS.ByteString)
-getMatches _ "" curcaptures  = return ([], curcaptures)
-getMatches creg src curcaptures = do
+getMatches :: Regex -> BS.ByteString -> ExceptT String IO [RegexpSplit BS.ByteString]
+getMatches _ "" = return []
+getMatches creg src = do
     x <- liftIO $ regexec creg src
     case x of
         Left (rcode, rerror) -> throwError ("Regexp application error: " ++ rerror ++ "(" ++ show rcode ++ ")")
-        Right Nothing -> return ([Unmatched src], curcaptures)
+        Right Nothing -> return [Unmatched src]
 
         -- Now this is a trick, I don't know exactly why this happens, but this happens with empty regexps. We are going to cheat here
-        Right (Just ("","",rm,_)) -> return (map (Unmatched . BS.singleton) (BS.unpack rm), curcaptures)
+        Right (Just ("","",rm,_)) -> return (map (Unmatched . BS.singleton) (BS.unpack rm))
 
         Right (Just (before,current,remaining,captures)) -> do
-            (remain, nextcaptures) <- getMatches creg remaining (curcaptures V.++ V.fromList captures)
-            return (Unmatched before : Matched current : remain, nextcaptures)
+            remain <- getMatches creg remaining
+            return (Unmatched before : Matched current captures : remain)
 
 
 data Replacement = RawReplacement BS.ByteString

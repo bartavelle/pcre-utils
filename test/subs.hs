@@ -10,6 +10,7 @@ tests = [ ("l", "x", "lap\\nin", "xap\\nin")
         , ("log(\\d+)truc", "x\\1x", "log186truc", "x186x")
         , ("'", "'\\''", "# This file is managed by Puppet. DO NOT EDIT.", "# This file is managed by Puppet. DO NOT EDIT.")
         , ("test", "x\\0x", "long test replacement but test", "long xtestx replacement but xtestx")
+        , ("(([0-9]+))", "<\\1>", "1.2.3.4", "<1>.<2>.<3>.<4>")
         ]
 
 toTest :: (BS.ByteString, BS.ByteString, BS.ByteString, BS.ByteString) -> IO Test
