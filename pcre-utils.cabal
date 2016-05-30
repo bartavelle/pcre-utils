@@ -29,7 +29,13 @@ library
   ghc-options:         -Wall
   -- ghc-prof-options:    -caf-all -auto-all
   extensions:          OverloadedStrings, BangPatterns
-  build-depends:       base >= 4.6 && < 4.10, regex-pcre-builtin >= 0.94.4.8, bytestring, attoparsec, mtl >= 2.2.1, vector, array
+  build-depends:       base >= 4.6 && < 4.10
+                     , regex-pcre-builtin >= 0.94.4.8
+                     , bytestring
+                     , attoparsec >= 0.11 && <= 0.14
+                     , mtl >= 2.2.1 && < 2.3
+                     , vector
+                     , array
 
 Test-Suite test-split
     hs-source-dirs: test
