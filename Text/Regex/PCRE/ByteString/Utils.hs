@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {- | A module implementing regexp-based split and substitute.
 
 >>> substituteCompile "(a+)" "lapin" "'\\1'"

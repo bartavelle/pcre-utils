@@ -12,7 +12,7 @@ maintainer:          bartavelle@gmail.com
 -- copyright:           
 category:            Text
 build-type:          Simple
-cabal-version:       >=1.8
+cabal-version:       >=1.10
 homepage:            https://github.com/bartavelle/pcre-utils
 bug-reports:         https://github.com/bartavelle/pcre-utils/issues
 Tested-With:         GHC == 7.10.3, GHC == 8.0.1, GHC == 8.2.1
@@ -28,7 +28,6 @@ library
   -- other-modules:       
   ghc-options:         -Wall
   -- ghc-prof-options:    -caf-all -auto-all
-  extensions:          OverloadedStrings, BangPatterns
   build-depends:       base >= 4.6 && < 5
                      , regex-pcre-builtin >= 0.94.4.8
                      , bytestring
@@ -36,20 +35,21 @@ library
                      , mtl >= 2.2.1 && < 2.3
                      , vector
                      , array
+ default-language: Haskell2010
 
 Test-Suite test-split
     hs-source-dirs: test
     type:           exitcode-stdio-1.0
     ghc-options:    -Wall
-    extensions:     OverloadedStrings
     build-depends:  base,pcre-utils,HUnit,bytestring, regex-pcre-builtin
     main-is:        split.hs
+    default-language: Haskell2010
 
 Test-Suite test-subs
     hs-source-dirs: test
     type:           exitcode-stdio-1.0
     ghc-options:    -Wall
-    extensions:     OverloadedStrings
     build-depends:  base,pcre-utils,HUnit,bytestring, regex-pcre-builtin
     main-is:        subs.hs
+    default-language: Haskell2010
 
